@@ -1,0 +1,124 @@
+#include <stdio.h>
+#include <limits.h>
+#include <stdbool.h>
+
+// Function to find vertex with minimum key value
+int minkey(int n, int key[], bool mstset[]) {
+    int minvalue = INT_MAX;
+    int minind = -1;
+
+    for(int i = 0; i < n; i++) {
+        if(!mstset[i] && key[i] < minvalue) {
+            minvalue = key[i];
+            minind = i;
+        }
+    }
+    return minind;
+}
+
+// Prim's Algorithm
+void prims(int n, int adj[n][n], char start) {
+    int key[n];
+    int parent[n];
+    bool mstset[n];
+    int order[n];   // To store order of selected vertices
+
+    // Initialization
+    for(int i = 0; i < n; i++) {
+        key[i] = INT_MAX;
+        mstset[i] = false;
+        parent[i] = -1;   // Important initialization
+    }
+
+    int startind = start - 'A';
+    key[startind] = 0;
+
+    int k = 0;
+
+    // Main loop (n-1 iterations)
+    for(int count = 0; count < n - 1; count++) {
+
+        int u = minkey(n, key, mstset);
+
+        // If no valid vertex found → disconnected graph
+        if(u == -1) {
+            printf("Graph is disconnected!\n");
+            return;
+        }
+
+        mstset[u] = true;
+        order[k++] = u;
+
+        // Update adjacent vertices
+        for(int i = 0; i < n; i++) {
+            if(adj[u][i] != 0 && !mstset[i] && adj[u][i] < key[i]) {
+                parent[i] = u;
+                key[i] = adj[u][i];
+            }
+        }
+        printf("Iteration %d:\n", count + 1);
+        printf("Selected Vertex: %c\n", u + 'A');
+
+        printf("Key array: ");
+        for(int i = 0; i < n; i++) {
+            if(key[i] == INT_MAX)
+                printf("INF ");
+            else
+                printf("%d ", key[i]);
+        }
+
+        printf("\nMST Set: ");
+        for(int i = 0; i < n; i++) {
+            printf("%d ", mstset[i]);
+        }
+
+        printf("\n\n");
+    }
+
+    // Include the last vertex
+    int last = minkey(n, key, mstset);
+    if(last != -1) {
+        order[k++] = last;
+    }
+
+    // Print MST in order
+    int total = 0;
+    printf("Edges in MST (in order):\n");
+
+    for(int i = 1; i < k; i++) {
+        int v = order[i];
+
+        printf("%c - %c \tWeight = %d\n",
+               parent[v] + 'A', v + 'A',
+               adj[v][parent[v]]);
+
+        total += adj[v][parent[v]];
+    }
+
+    printf("Total Weight = %d\n", total);
+}
+
+// Main function
+int main() {
+    int n;
+
+    printf("Enter number of vertices: ");
+    scanf("%d", &n);
+
+    int adj[n][n];
+
+    printf("Enter adjacency matrix:\n");
+    for(int i = 0; i < n; i++) {
+        for(int j = 0; j < n; j++) {
+            scanf("%d", &adj[i][j]);
+        }
+    }
+
+    char start;
+    printf("Enter starting vertex (A, B, C...): ");
+    scanf(" %c", &start);
+
+    prims(n, adj, start);
+
+    return 0;
+}
