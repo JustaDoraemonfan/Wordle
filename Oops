@@ -1,0 +1,272 @@
+//Program1
+import java.util.Scanner;
+
+class MyClass {
+
+    // Default constructor
+    public MyClass() {}
+
+    // Parameterized constructor (not really needed but added as per rules)
+    public MyClass(int dummy) {}
+
+    // Method for int
+    public int abs(int x) {
+        return (x < 0) ? -x : x;
+    }
+
+    // Method for float
+    public float abs(float x) {
+        return (x < 0) ? -x : x;
+    }
+
+    // Method for double
+    public double abs(double x) {
+        return (x < 0) ? -x : x;
+    }
+}
+
+public class Driver1 {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        MyClass obj = new MyClass();
+
+        System.out.print("Enter integer: ");
+        int i = sc.nextInt();
+
+        System.out.print("Enter float: ");
+        float f = sc.nextFloat();
+
+        System.out.print("Enter double: ");
+        double d = sc.nextDouble();
+
+        System.out.println("Absolute int: " + obj.abs(i));
+        System.out.println("Absolute float: " + obj.abs(f));
+        System.out.println("Absolute double: " + obj.abs(d));
+    }
+}
+
+
+//Program2
+import java.util.Scanner;
+
+class Call {
+    private int duration;
+
+    public Call() {}
+
+    public Call(int duration) {
+        this.duration = duration;
+    }
+
+    public int getDuration() {
+        return duration;
+    }
+
+    public void setDuration(int duration) {
+        this.duration = duration;
+    }
+}
+
+// Local Call
+class LocalCall extends Call {
+
+    public LocalCall() {}
+
+    public LocalCall(int duration) {
+        super(duration);
+    }
+
+    public int calculateUnits() {
+        int duration = getDuration();
+        return (int) Math.ceil(duration / 3.0); // 1 unit per 3 min
+    }
+}
+
+// Long Distance Call
+class LongDistanceCall extends Call {
+    private String time;
+    private int originCode;
+    private int destCode;
+
+    public LongDistanceCall() {}
+
+    public LongDistanceCall(int duration, String time, int originCode, int destCode) {
+        super(duration);
+        this.time = time;
+        this.originCode = originCode;
+        this.destCode = destCode;
+    }
+
+    public double calculateBill() {
+        double rate;
+
+        if (time.equalsIgnoreCase("day")) {
+            rate = 2.0;
+        } else {
+            rate = 1.5;
+        }
+
+        return getDuration() * rate;
+    }
+}
+
+public class Driver2 {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        // Local Call
+        System.out.print("Enter local call duration (minutes): ");
+        int localDur = sc.nextInt();
+
+        LocalCall lc = new LocalCall(localDur);
+        System.out.println("Local call units: " + lc.calculateUnits());
+
+        // STD Call
+        System.out.print("Enter STD call duration: ");
+        int stdDur = sc.nextInt();
+
+        sc.nextLine(); // clear buffer
+
+        System.out.print("Enter time (day/night): ");
+        String time = sc.nextLine();
+
+        System.out.print("Enter origin STD code: ");
+        int o = sc.nextInt();
+
+        System.out.print("Enter destination STD code: ");
+        int d = sc.nextInt();
+
+        LongDistanceCall ldc = new LongDistanceCall(stdDur, time, o, d);
+        System.out.println("STD Call Bill: " + ldc.calculateBill());
+    }
+}
+
+
+//Program3
+import java.util.Scanner;
+
+class Staff {
+    private int code;
+    private String name;
+
+    public Staff() {}
+
+    public Staff(int code, String name) {
+        this.code = code;
+        this.name = name;
+    }
+
+    public void display() {
+        System.out.println("Code: " + code);
+        System.out.println("Name: " + name);
+    }
+}
+
+class Teacher extends Staff {
+    private String subject;
+    private String publication;
+
+    public Teacher() {}
+
+    public Teacher(int code, String name, String subject, String publication) {
+        super(code, name);
+        this.subject = subject;
+        this.publication = publication;
+    }
+
+    public void display() {
+        super.display();
+        System.out.println("Subject: " + subject);
+        System.out.println("Publication: " + publication);
+    }
+}
+
+class Officer extends Staff {
+    private String grade;
+
+    public Officer() {}
+
+    public Officer(int code, String name, String grade) {
+        super(code, name);
+        this.grade = grade;
+    }
+
+    public void display() {
+        super.display();
+        System.out.println("Grade: " + grade);
+    }
+}
+
+class Typist extends Staff {
+    private int speed;
+
+    public Typist() {}
+
+    public Typist(int code, String name, int speed) {
+        super(code, name);
+        this.speed = speed;
+    }
+
+    public int getSpeed() {
+        return speed;
+    }
+
+    public void display() {
+        super.display();
+        System.out.println("Speed: " + speed);
+    }
+}
+
+class RegularTypist extends Typist {
+    private double remuneration;
+
+    public RegularTypist() {}
+
+    public RegularTypist(int code, String name, int speed, double remuneration) {
+        super(code, name, speed);
+        this.remuneration = remuneration;
+    }
+
+    public void display() {
+        super.display();
+        System.out.println("Remuneration: " + remuneration);
+    }
+}
+
+class CasualTypist extends Typist {
+    private double dailyWages;
+
+    public CasualTypist() {}
+
+    public CasualTypist(int code, String name, int speed, double dailyWages) {
+        super(code, name, speed);
+        this.dailyWages = dailyWages;
+    }
+
+    public void display() {
+        super.display();
+        System.out.println("Daily Wages: " + dailyWages);
+    }
+}
+
+public class Driver3 {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.println("Enter Teacher Details:");
+        Teacher t = new Teacher(1, "Souvik", "Java", "OOP Book");
+        t.display();
+
+        System.out.println("\nEnter Officer Details:");
+        Officer o = new Officer(2, "Raj", "A");
+        o.display();
+
+        System.out.println("\nEnter Regular Typist Details:");
+        RegularTypist rt = new RegularTypist(3, "Amit", 60, 20000);
+        rt.display();
+
+        System.out.println("\nEnter Casual Typist Details:");
+        CasualTypist ct = new CasualTypist(4, "Rina", 50, 500);
+        ct.display();
+    }
+}
