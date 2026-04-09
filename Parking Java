@@ -1,0 +1,136 @@
+import java.util.Scanner;
+import java.util.Stack;
+
+/**
+ * Bashemin Parking Garage Simulator
+ *
+ * Models a single-lane garage holding up to 10 cars.
+ * There is only one entrance/exit at one end of the lane.
+ * Cars are stored as a stack (last in, first out from exit).
+ *
+ * Input format per line:
+ *   A <plate>   - car arrives
+ *   D <plate>   - car departs
+ *
+ * On arrival:  prints whether car was stored or turned away (garage full).
+ * On departure: prints how many times the car was moved out during retrieval.
+ */
+public class ParkingGarage {
+
+    static final int MAX_CAPACITY = 10;
+
+    // The garage lane: index 0 = back of lane, top of stack = nearest to exit
+    static Stack<String> garage = new Stack<>();
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println("Bashemin Parking Garage");
+        System.out.println("=======================");
+        System.out.println("Enter commands (A <plate> or D <plate>). Ctrl+D / Ctrl+Z to quit.\n");
+
+        while (scanner.hasNextLine()) {
+            String line = scanner.nextLine().trim();
+            if (line.isEmpty()) continue;
+
+            String[] parts = line.split("\\s+");
+            if (parts.length < 2) {
+                System.out.println("Invalid input: " + line);
+                continue;
+            }
+
+            String action = parts[0].toUpperCase();
+            String plate  = parts[1].toUpperCase();
+
+            switch (action) {
+                case "A":
+                    processArrival(plate);
+                    break;
+                case "D":
+                    processDeparture(plate);
+                    break;
+                default:
+                    System.out.println("Unknown action '" + action + "'. Use A or D.");
+            }
+        }
+
+        scanner.close();
+        System.out.println("\nGarage closed.");
+    }
+
+    /**
+     * Handles a car arriving at the garage.
+     * If the garage is full, the car is turned away.
+     * Otherwise, the car is added to the back of the lane (bottom of stack).
+     */
+    static void processArrival(String plate) {
+        System.out.println("Car " + plate + " has arrived.");
+
+        if (garage.size() >= MAX_CAPACITY) {
+            System.out.println("  -> No room available. Car " + plate + " departs without entering.\n");
+            return;
+        }
+
+        // Push to top of stack = nearest to exit end
+        // To add to the BACK of the lane we rebuild the stack
+        // so the new car ends up at the bottom (farthest from exit).
+        Stack<String> temp = new Stack<>();
+
+        // Move all cars out temporarily
+        while (!garage.isEmpty()) {
+            temp.push(garage.pop());
+        }
+
+        // Place new car at the back (bottom of stack)
+        garage.push(plate);
+
+        // Restore everyone else on top, preserving original order
+        while (!temp.isEmpty()) {
+            garage.push(temp.pop());
+        }
+
+        System.out.println("  -> Car " + plate + " stored in garage. "
+                + "(" + garage.size() + "/" + MAX_CAPACITY + " spaces used)\n");
+    }
+
+    /**
+     * Handles a car departing from the garage.
+     * Cars blocking the target are moved out one by one, the target
+     * is driven out, then the displaced cars are restored in original order.
+     * Prints the total number of times the departing car was moved out.
+     */
+    static void processDeparture(String plate) {
+        System.out.println("Car " + plate + " is departing.");
+
+        // Check the car is actually in the garage
+        if (!garage.contains(plate)) {
+            System.out.println("  -> Car " + plate + " is not in the garage.\n");
+            return;
+        }
+
+        Stack<String> temp = new Stack<>();  // holds displaced cars
+        int moveCount = 0;
+
+        // Pop cars off (from exit end) until we reach the target
+        while (!garage.isEmpty() && !garage.peek().equals(plate)) {
+            String displaced = garage.pop();
+            temp.push(displaced);
+            moveCount++;
+            System.out.println("  [move] Car " + displaced + " moved out temporarily.");
+        }
+
+        // Remove the target car
+        garage.pop();
+        System.out.println("  -> Car " + plate + " driven out.");
+
+        // Restore displaced cars in original order
+        while (!temp.isEmpty()) {
+            String restored = temp.pop();
+            garage.push(restored);
+            System.out.println("  [restore] Car " + restored + " moved back in.");
+        }
+
+        System.out.println("  -> Car " + plate + " has left. It was moved out " + moveCount
+                + " time(s). (" + garage.size() + "/" + MAX_CAPACITY + " spaces used)\n");
+    }
+}
