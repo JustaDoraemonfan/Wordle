@@ -1,0 +1,129 @@
+#include<stdio.h>
+#include<stdlib.h>
+
+#define max 10
+
+struct node{
+  int data;
+  struct node* next;
+};
+
+struct node* adj[max];
+int vis[max],vis1[max];
+int que[max];
+int f = -1, r = -1;
+
+void enque(int data){
+  if(r == max-1){
+    return;
+  }
+  else if(f == -1 && r == -1){
+    f = r = 0;
+    que[r] = data;
+    return;
+  }
+  que[++r] = data;
+}
+
+int deque(){
+  if(f == -1){
+    return -1;
+  }
+  else if(f == r){
+    int v = que[f];
+    f = r = -1;
+    return v;
+  }
+  return que[f++];
+}
+
+void addEdge(int u, int v){
+  struct node* newNode = malloc(sizeof(struct node));
+  newNode->data = v;
+  newNode->next = NULL;
+  if(adj[u] == NULL){
+    adj[u] = newNode;
+  }
+  else{
+    struct node* temp = adj[u];
+    while(temp->next != NULL){
+      temp = temp->next;
+    }
+
+    temp->next = newNode;
+  }
+}
+
+void BFS(int start, int n){
+  enque(start);
+  vis[start] = 1;
+
+  while(f != -1){
+    int v = deque();
+    printf("%d ",v);
+    struct node* temp = adj[v];
+    while(temp != NULL){
+      if(vis[temp->data] != 1){
+        enque(temp->data);
+        vis[temp->data] = 1;
+      }
+      temp = temp->next;
+    }
+  }
+
+  for(int i = 1; i <= n; i++){
+    if(vis[i] != 1){
+      BFS(i,n);
+    }
+  }
+}
+
+void DFS(int start, int n){
+  printf("%d ",start);
+  vis1[start] = 1;
+
+  struct node* temp = adj[start];
+  while(temp!=NULL){
+    if(vis1[temp->data] != 1){
+      DFS(temp->data,n);
+    }
+    temp = temp->next;
+  }
+}
+
+int main(){
+  int n;
+  printf("Enter number of nodes : ");
+  scanf("%d",&n);
+
+  for(int i = 1; i <= n; i++){
+    vis[i] = 0;
+    vis1[i] = 0;
+    adj[i] = NULL;
+  }
+
+  int u,v,m;
+  printf("Enter number of edges : ");
+  scanf("%d",&m);
+  printf("Enter edges : ");
+  for(int i = 0; i < m; i++){
+      printf("Edge between : ");
+      scanf("%d",&u);
+      printf("And : ");
+      scanf("%d",&v);
+      addEdge(u,v);
+    }
+
+  int s;
+  printf("ENter start : ");
+  scanf("%d",&s);
+
+  BFS(s,n);
+  printf("\n");
+  DFS(s,n);
+  for(int i = 1; i <= n; i++){
+    if(vis1[i] != 1){
+      DFS(i,n);
+    }
+  }
+}
