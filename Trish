@@ -1,216 +1,122 @@
-#include<stdio.h>
-#include<stdlib.h>
+import java.util.*;
 
-#define max 10
+abstract class ThreeDObject {
+    protected double a, b, c; // dimensions
 
-struct node{
-  int data;
-  struct node* next;
-};
-
-struct node* adj[max];
-int vis[max],vis1[max];
-int que[max];
-int f = -1, r = -1;
-
-void enque(int data){
-  if(r == max-1){
-    return;
-  }
-  else if(f == -1 && r == -1){
-    f = r = 0;
-    que[r] = data;
-    return;
-  }
-  que[++r] = data;
+    abstract double volume();
+    abstract double wholeSurfaceArea();
 }
 
-int deque(){
-  if(f == -1){
-    return -1;
-  }
-  else if(f == r){
-    int v = que[f];
-    f = r = -1;
-    return v;
-  }
-  return que[f++];
+// Box
+class Box extends ThreeDObject {
+    Box(double l, double w, double h) {
+        a = l; b = w; c = h;
+    }
+
+    double volume() {
+        return a * b * c;
+    }
+
+    double wholeSurfaceArea() {
+        return 2 * (a*b + b*c + a*c);
+    }
 }
 
-void addEdge(int u, int v){
-  struct node* newNode = malloc(sizeof(struct node));
-  newNode->data = v;
-  newNode->next = NULL;
-  if(adj[u] == NULL){
-    adj[u] = newNode;
-  }
-  else{
-    struct node* temp = adj[u];
-    while(temp->next != NULL){
-      temp = temp->next;
+// Cube
+class Cube extends ThreeDObject {
+    Cube(double side) {
+        a = side;
     }
 
-    temp->next = newNode;
-  }
+    double volume() {
+        return a * a * a;
+    }
+
+    double wholeSurfaceArea() {
+        return 6 * a * a;
+    }
 }
 
-void BFS(int start, int n){
-  enque(start);
-  vis[start] = 1;
-
-  while(f != -1){
-    int v = deque();
-    printf("%d ",v);
-    struct node* temp = adj[v];
-    while(temp != NULL){
-      if(vis[temp->data] != 1){
-        enque(temp->data);
-        vis[temp->data] = 1;
-      }
-      temp = temp->next;
+// Cylinder
+class Cylinder extends ThreeDObject {
+    Cylinder(double r, double h) {
+        a = r; b = h;
     }
-  }
 
-  for(int i = 1; i <= n; i++){
-    if(vis[i] != 1){
-      BFS(i,n);
+    double volume() {
+        return Math.PI * a * a * b;
     }
-  }
+
+    double wholeSurfaceArea() {
+        return 2 * Math.PI * a * (a + b);
+    }
 }
 
-void DFS(int start, int n){
-  printf("%d ",start);
-  vis1[start] = 1;
-
-  struct node* temp = adj[start];
-  while(temp!=NULL){
-    if(vis1[temp->data] != 1){
-      DFS(temp->data,n);
+// Cone
+class Cone extends ThreeDObject {
+    Cone(double r, double h) {
+        a = r; b = h;
     }
-    temp = temp->next;
-  }
+
+    double volume() {
+        return (1.0/3) * Math.PI * a * a * b;
+    }
+
+    double wholeSurfaceArea() {
+        double l = Math.sqrt(a*a + b*b);
+        return Math.PI * a * (a + l);
+    }
 }
 
-int main(){
-  int n;
-  printf("Enter number of nodes : ");
-  scanf("%d",&n);
+// Driver Class (Menu Driven)
+public class Main3D {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        int choice;
 
-  for(int i = 1; i <= n; i++){
-    vis[i] = 0;
-    vis1[i] = 0;
-    adj[i] = NULL;
-  }
+        do {
+            System.out.println("\n1.Box 2.Cube 3.Cylinder 4.Cone 5.Exit");
+            System.out.print("Enter choice: ");
+            choice = sc.nextInt();
 
-  int u,v,m;
-  printf("Enter number of edges : ");
-  scanf("%d",&m);
-  printf("Enter edges : ");
-  for(int i = 0; i < m; i++){
-      printf("Edge between : ");
-      scanf("%d",&u);
-      printf("And : ");
-      scanf("%d",&v);
-      addEdge(u,v);
+            ThreeDObject obj = null;
+
+            switch(choice) {
+                case 1:
+                    System.out.print("Enter l w h: ");
+                    obj = new Box(sc.nextDouble(), sc.nextDouble(), sc.nextDouble());
+                    break;
+
+                case 2:
+                    System.out.print("Enter side: ");
+                    obj = new Cube(sc.nextDouble());
+                    break;
+
+                case 3:
+                    System.out.print("Enter radius height: ");
+                    obj = new Cylinder(sc.nextDouble(), sc.nextDouble());
+                    break;
+
+                case 4:
+                    System.out.print("Enter radius height: ");
+                    obj = new Cone(sc.nextDouble(), sc.nextDouble());
+                    break;
+
+                case 5:
+                    System.out.println("Exit");
+                    break;
+
+                default:
+                    System.out.println("Invalid choice");
+            }
+
+            if(obj != null) {
+                System.out.println("Volume = " + obj.volume());
+                System.out.println("Surface Area = " + obj.wholeSurfaceArea());
+            }
+
+        } while(choice != 5);
+
+        sc.close();
     }
-
-  int s;
-  printf("ENter start : ");
-  scanf("%d",&s);
-
-  BFS(s,n);
-  printf("\n");
-  DFS(s,n);
-  for(int i = 1; i <= n; i++){
-    if(vis1[i] != 1){
-      DFS(i,n);
-    }
-  }
-}
-
-
-
-
-#include<stdio.h>
-#define v 3
-#define inf 9999
-
-
-void printMatrix(int dist[][v], int step){
-  printf("A^%d :\n",step);
-  for(int i = 0 ; i < v; i++){
-    for(int j = 0; j < v; j++){
-      if(dist[i][j] != inf){
-        printf("%d\t",dist[i][j]);
-      }
-      else{
-        printf("%s\t","INF");
-      }
-    }
-    printf("\n");
-  }
-}
-void floyedWarshall(int graph[][v]){
-  int dist[v][v];
-  int next[v][v];
-
-  for(int i = 0; i < v; i++){
-    for(int j = 0; j < v; j++){
-      dist[i][j] = graph[i][j];
-      if(graph[i][j] != inf && i != j){
-        next[i][j] = j;
-      }
-      else{
-        next[i][j] = -1;
-      }
-    }
-  }
-
-  for(int k = 0; k < v; k++){
-    for(int i = 0; i < v; i++){
-      for(int j = 0; j < v; j++){
-        if(dist[i][k] != inf && dist[k][j] != inf && (dist[i][k] + dist[k][j] < dist[i][j])){
-          dist[i][j] = dist[i][k] + dist[k][j];
-          next[i][j] = next[i][k];
-        }
-      }
-    }
-
-    printMatrix(dist,k+1);
-  }
-
-  for(int i = 0; i < v; i++){
-    for(int j = 0; j < v; j++){
-      if(i != j){
-      int u = i;
-      printf("%d ",u+1);
-      while(u != j){
-        u = next[u][j];
-        printf("-> %d ",u+1);
-      }
-      printf(": %d\n",dist[i][j]);
-    }
-  }
-}
-}
-
-int main() {
-    int graph[v][v] = {
-        {0,   4,  11},  // From node 1
-        {6,   0,    2},  // From node 2
-        {3,   inf,  0}   // From node 3
-    };
-
-    printf("Initial Graph (A^0):\n");
-    for (int i = 0; i < v; i++) {
-        for (int j = 0; j < v; j++) {
-            if (graph[i][j] == inf) printf("%s\t", "INF");
-            else printf("%d\t", graph[i][j]);
-        }
-        printf("\n");
-    }
-
-    floyedWarshall(graph);
-
-    return 0;
 }
