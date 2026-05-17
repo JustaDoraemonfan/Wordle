@@ -1,91 +1,282 @@
-//fisrt
+import java.util.Random;
+import java.util.concurrent.Semaphore;
+
+class PingThread extends Thread{
+    Semaphore pingSem;
+    Semaphore pongSem;
+
+    public PingThread(Semaphore pingSem, Semaphore pongSem){
+        this.pingSem = pingSem;
+        this.pongSem = pongSem;
+    }
+
+    public void run(){
+        Random rand = new Random();
+
+        try{
+
+            while(true){
+            pingSem.acquire();
+            
+            int s = rand.nextInt(10);
+            for(int i = 0; i < s; i++){
+                System.out.print(" ");
+            }
+            System.out.println("PING");
+            Thread.sleep(1000);
+            pongSem.release();
+        }
+    }catch(Exception e){
+        System.out.println("PING THREAD interrupted");
+    }
+   }
+}
+
+class PongThread extends Thread{
+    Semaphore pingSem;
+    Semaphore pongSem;
+
+    public PongThread(Semaphore pingSem, Semaphore pongSem){
+        this.pingSem = pingSem;
+        this.pongSem = pongSem;
+    }
+
+    public void run(){
+        Random rand = new Random();
+
+        try{
+
+            while(true){
+            pongSem.acquire();
+            
+            int s = rand.nextInt(10);
+            for(int i = 0; i < s; i++){
+                System.out.print(" ");
+            }
+            System.out.println("PONG");
+            Thread.sleep(1000);
+            pingSem.release();
+        }
+    }catch(Exception e){
+        System.out.println("PONG THREAD interrupted");
+    }
+   }
+}
+
+public class PingPongMain{
+    public static void main(String[] args) {
+        Semaphore ping = new Semaphore(1);
+        Semaphore pong = new Semaphore(0);
+
+        PingThread obj1 = new PingThread(ping, pong);
+        PongThread obj2 = new PongThread(ping, pong);
+
+        obj1.start();;
+        obj2.start();
+    }
+}
+
+
+
+
+
+
+
 import java.util.Scanner;
 
-class Factorial {
+public class Driver {
+    public static void main(String ar[]) {
+        Queue q = new Queue(4);
+        new NewTh("Producer", q);
+        new NewTh("Consumer", q);
+    }
+}
 
-    static long[] fact = new long[21];
+class Queue {
+    private int arr[], len, fr, rear;
 
-    public static long factorial(int x) {
+    Queue(int l) {
+        len = l;
+        arr = new int[l];
+        fr = rear = 0;
+    }
 
-        if (x < 0) {
-            throw new IllegalArgumentException(
-                "value of x must be positive"
-            );
+    public void insert(int ele) {
+        arr[rear] = ele;
+        rear = (rear + 1) % len;
+    }
+
+    public void del() {
+        System.out.println("Consumed data:" + arr[fr]);
+        fr = (fr + 1) % len;
+    }
+
+    public int getLen() {
+        return len;
+    }
+}
+
+class NewTh implements Runnable {
+    private Thread t;
+    private Queue q;
+    private Scanner sc = new Scanner(System.in);
+    private static int cnt = 0;
+
+    NewTh(String n, Queue q1) {
+        t = new Thread(this, n);
+        q = q1;
+        t.start();
+    }
+
+    public void run() {
+        if (t.getName().equals("Producer"))
+            while (true)
+                produce();
+        else
+            while (true)
+                consume();
+    }
+
+    public void produce() {
+        try {
+            
+            System.out.println("Enter Data:");
+            int ele = sc.nextInt();
+            synchronized (q) {
+                if (NewTh.cnt == q.getLen()) {
+                    System.out.println("Buffer is full! Producer halts");
+                    q.wait();
+                }
+                q.insert(ele);
+                NewTh.cnt++;
+                q.notifyAll();
+            }
+        } catch (InterruptedException e) {
+            System.out.println(e);
+        }
+    }
+
+    public void consume() {
+        try {
+            synchronized (q) {
+                if (NewTh.cnt == 0) {
+                    System.out.println("Buffer is empty! Consumer halts");
+                    q.wait();
+                }
+                q.del();
+                NewTh.cnt--;
+                Thread.sleep(3000);
+                q.notifyAll();
+            }
+        } catch (InterruptedException e) {
+            System.out.println(e);
+        }
+    }
+}
+
+
+
+
+
+
+
+import java.util.Scanner;
+class MaxThread extends Thread {
+    private int[] array;
+    private int max;
+    public MaxThread(int[] array) {
+
+        this.array = array;
+    }
+
+    public int getMax() {
+
+        return max;
+    }
+
+    public void run() {
+
+        max = array[0];
+
+        for (int i = 1;
+             i < array.length;
+             i++) {
+
+            if (array[i] > max) {
+
+                max = array[i];
+            }
         }
 
-        if (x >= fact.length) {
-            throw new IllegalArgumentException(
-                "result will overflow"
-            );
+        System.out.println(
+            "Maximum Element = " + max
+        );
+    }
+}
+
+class AvgThread extends Thread {
+    private int[] array;
+    private double average;
+    public AvgThread(int[] array) {
+
+        this.array = array;
+    }
+
+    public double getAverage() {
+
+        return average;
+    }
+
+    public void run() {
+
+        int sum = 0;
+
+        for (int value : array) {
+
+            sum += value;
         }
 
-        fact[0] = 1;
+        average =
+            (double) sum / array.length;
 
-        for (int i = 1; i <= x; i++) {
-            fact[i] = fact[i - 1] * i;
-        }
-
-        return fact[x];
+        System.out.println(
+            "Average = " + average
+        );
     }
 }
 
 public class Main {
 
-    public static void main(String[] args) {
+    public static void main(String[] args)
+        throws InterruptedException {
 
         Scanner sc = new Scanner(System.in);
+        System.out.print("Enter Number of elements for the array : ");
+        int n = sc.nextInt();
+        int[] arr = new int[n];
 
-        try {
-
-            System.out.print("Enter a number: ");
-            int n = sc.nextInt();
-
-            long result = Factorial.factorial(n);
-
-            System.out.println(
-                "Factorial of " + n + " = " + result
-            );
+        System.out.println("Enter elements of array :");
+        for(int i = 0; i < n; i++){
+            arr[i] = sc.nextInt();
         }
+        MaxThread maxObj =
+            new MaxThread(arr);
 
-        catch (IllegalArgumentException e) {
+        AvgThread avgObj =
+            new AvgThread(arr);
 
-            System.out.println(
-                "Exception: " + e.getMessage()
-            );
-        }
+        maxObj.start();
+        avgObj.start();
 
-        sc.close();
-    }
-}
+        maxObj.join();
+        avgObj.join();
 
-//second
-import java.util.Scanner;
+        double result =
+            maxObj.getMax()
+            / avgObj.getAverage();
 
-public class EmailValidation {
-
-    public static void main(String[] args) {
-
-        Scanner sc = new Scanner(System.in);
-
-        try {
-
-            System.out.print("Enter Email ID: ");
-            String email = sc.nextLine();
-
-            if (!(email.contains("@") && email.contains("."))) {
-
-                throw new Exception("Invalid Email ID");
-            }
-
-            System.out.println("Valid Email ID");
-
-        }
-
-        catch (Exception e) {
-
-            System.out.println("Exception: " + e.getMessage());
-        }
-
-        sc.close();
+        System.out.println(
+            "(Max / Average) = " + result
+        );
     }
 }
