@@ -1,282 +1,138 @@
-import java.util.Random;
-import java.util.concurrent.Semaphore;
+//n queens
+#include<stdio.h>
+#include<stdlib.h>
+#include<stdbool.h>
 
-class PingThread extends Thread{
-    Semaphore pingSem;
-    Semaphore pongSem;
-
-    public PingThread(Semaphore pingSem, Semaphore pongSem){
-        this.pingSem = pingSem;
-        this.pongSem = pongSem;
+int N;
+int col[20];
+int sol = 0;
+void print()
+{
+  sol++;
+  printf("Solution %d :\n",sol);
+  for(int i = 0; i < N; i++){
+    for(int j = 0; j < N; j++){
+      if(col[i] == j){
+        printf("Q%d\t",i+1);
+      }
+      else printf("\t");
     }
-
-    public void run(){
-        Random rand = new Random();
-
-        try{
-
-            while(true){
-            pingSem.acquire();
-            
-            int s = rand.nextInt(10);
-            for(int i = 0; i < s; i++){
-                System.out.print(" ");
-            }
-            System.out.println("PING");
-            Thread.sleep(1000);
-            pongSem.release();
-        }
-    }catch(Exception e){
-        System.out.println("PING THREAD interrupted");
+    printf("\n-------------------------------");
+    printf("\n");
+  }
+}
+bool isSafe(int row,int c){
+  for(int i = 0; i < row; i++){
+    if(col[i] == c){
+      return false;
     }
-   }
+    else if(abs(col[i] - c) == abs(row - i)){
+      return false;
+    }
+  }
+  return true;
 }
 
-class PongThread extends Thread{
-    Semaphore pingSem;
-    Semaphore pongSem;
-
-    public PongThread(Semaphore pingSem, Semaphore pongSem){
-        this.pingSem = pingSem;
-        this.pongSem = pongSem;
+void solve(int row){
+  if(row == N){
+    print();
+    return;
+  }
+  for(int c = 0; c < N; c++){
+    if(isSafe(row,c)){
+      col[row] = c;
+      solve(row+1);
+      col[row] = -1;
     }
-
-    public void run(){
-        Random rand = new Random();
-
-        try{
-
-            while(true){
-            pongSem.acquire();
-            
-            int s = rand.nextInt(10);
-            for(int i = 0; i < s; i++){
-                System.out.print(" ");
-            }
-            System.out.println("PONG");
-            Thread.sleep(1000);
-            pingSem.release();
-        }
-    }catch(Exception e){
-        System.out.println("PONG THREAD interrupted");
-    }
-   }
+  }
 }
 
-public class PingPongMain{
-    public static void main(String[] args) {
-        Semaphore ping = new Semaphore(1);
-        Semaphore pong = new Semaphore(0);
+int main(){
+  printf("Enter number of queens : ");
+  scanf("%d",&N);
 
-        PingThread obj1 = new PingThread(ping, pong);
-        PongThread obj2 = new PongThread(ping, pong);
+  for(int i = 0; i < N; i++) col[i] = -1;
+  solve(0);
 
-        obj1.start();;
-        obj2.start();
-    }
+  if(sol == 0) printf("No solutions exists");
+  else printf("Total solutions : %d",sol);
+  return 0;
 }
 
 
+//g color
+#include<stdio.h>
+#include<stdbool.h>
 
+#define V 4
 
-
-
-
-import java.util.Scanner;
-
-public class Driver {
-    public static void main(String ar[]) {
-        Queue q = new Queue(4);
-        new NewTh("Producer", q);
-        new NewTh("Consumer", q);
+void printSol(int col[]){
+  for(int i = 0; i < V; i++){
+    printf("Colore of %d -> color %d",i+1,col[i]);
+  }
+}
+bool isSafe(bool graph[][V], int color[], int v, int c){
+  for(int i = 0; i < V; i++){
+    if(graph[v][i] == 1 && color[i] == c){
+      return false;
     }
+  }
+  return true;
 }
 
-class Queue {
-    private int arr[], len, fr, rear;
+bool graphColUtil(bool graph[][V], int color[], int m, int v){
+  if(v == V){
+    return true;
+  }
 
-    Queue(int l) {
-        len = l;
-        arr = new int[l];
-        fr = rear = 0;
+  for(int c = 1; c <= m; c++){
+    if(isSafe(graph,color,v,c)){
+      color[v] = c;
+
+    if(graphColUtil(graph,color,m,v+1)){
+      return true;
     }
 
-    public void insert(int ele) {
-        arr[rear] = ele;
-        rear = (rear + 1) % len;
-    }
-
-    public void del() {
-        System.out.println("Consumed data:" + arr[fr]);
-        fr = (fr + 1) % len;
-    }
-
-    public int getLen() {
-        return len;
-    }
+    color[v] = 0;
+  }
+}
+  return false;
 }
 
-class NewTh implements Runnable {
-    private Thread t;
-    private Queue q;
-    private Scanner sc = new Scanner(System.in);
-    private static int cnt = 0;
+bool graphCol(bool graph[][V], int m){
+  int col[V];
+  for(int i = 0; i < V; i++){
+    col[i] = 0;
+  }
 
-    NewTh(String n, Queue q1) {
-        t = new Thread(this, n);
-        q = q1;
-        t.start();
-    }
+  if(graphColUtil(graph,col,m,0) == false){
+    printf("No solution\n");
+    return false;
+  }
 
-    public void run() {
-        if (t.getName().equals("Producer"))
-            while (true)
-                produce();
-        else
-            while (true)
-                consume();
-    }
-
-    public void produce() {
-        try {
-            
-            System.out.println("Enter Data:");
-            int ele = sc.nextInt();
-            synchronized (q) {
-                if (NewTh.cnt == q.getLen()) {
-                    System.out.println("Buffer is full! Producer halts");
-                    q.wait();
-                }
-                q.insert(ele);
-                NewTh.cnt++;
-                q.notifyAll();
-            }
-        } catch (InterruptedException e) {
-            System.out.println(e);
-        }
-    }
-
-    public void consume() {
-        try {
-            synchronized (q) {
-                if (NewTh.cnt == 0) {
-                    System.out.println("Buffer is empty! Consumer halts");
-                    q.wait();
-                }
-                q.del();
-                NewTh.cnt--;
-                Thread.sleep(3000);
-                q.notifyAll();
-            }
-        } catch (InterruptedException e) {
-            System.out.println(e);
-        }
-    }
+  printSol(col);
+  return true;
 }
 
+int main() {
+    // Adjacency matrix from the image
+    bool graph[V][V] = {
+        {0, 1, 1, 1},
+        {1, 0, 1, 0},
+        {1, 1, 0, 1},
+        {1, 0, 1, 0}
+    };
 
+    int m = 3; // number of colors
 
-
-
-
-
-import java.util.Scanner;
-class MaxThread extends Thread {
-    private int[] array;
-    private int max;
-    public MaxThread(int[] array) {
-
-        this.array = array;
+    printf("Adjacency Matrix:\n");
+    for (int i = 0; i < V; i++) {
+        for (int j = 0; j < V; j++)
+            printf("%d ", graph[i][j]);
+        printf("\n");
     }
 
-    public int getMax() {
+    graphCol(graph, m);
 
-        return max;
-    }
-
-    public void run() {
-
-        max = array[0];
-
-        for (int i = 1;
-             i < array.length;
-             i++) {
-
-            if (array[i] > max) {
-
-                max = array[i];
-            }
-        }
-
-        System.out.println(
-            "Maximum Element = " + max
-        );
-    }
-}
-
-class AvgThread extends Thread {
-    private int[] array;
-    private double average;
-    public AvgThread(int[] array) {
-
-        this.array = array;
-    }
-
-    public double getAverage() {
-
-        return average;
-    }
-
-    public void run() {
-
-        int sum = 0;
-
-        for (int value : array) {
-
-            sum += value;
-        }
-
-        average =
-            (double) sum / array.length;
-
-        System.out.println(
-            "Average = " + average
-        );
-    }
-}
-
-public class Main {
-
-    public static void main(String[] args)
-        throws InterruptedException {
-
-        Scanner sc = new Scanner(System.in);
-        System.out.print("Enter Number of elements for the array : ");
-        int n = sc.nextInt();
-        int[] arr = new int[n];
-
-        System.out.println("Enter elements of array :");
-        for(int i = 0; i < n; i++){
-            arr[i] = sc.nextInt();
-        }
-        MaxThread maxObj =
-            new MaxThread(arr);
-
-        AvgThread avgObj =
-            new AvgThread(arr);
-
-        maxObj.start();
-        avgObj.start();
-
-        maxObj.join();
-        avgObj.join();
-
-        double result =
-            maxObj.getMax()
-            / avgObj.getAverage();
-
-        System.out.println(
-            "(Max / Average) = " + result
-        );
-    }
+    return 0;
 }
