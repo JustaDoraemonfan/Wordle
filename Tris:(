@@ -1,138 +1,204 @@
-//n queens
-#include<stdio.h>
-#include<stdlib.h>
-#include<stdbool.h>
+#include <stdio.h>
 
-int N;
-int col[20];
-int sol = 0;
-void print()
+#define N 4
+
+// Goal State
+int goal[N][N] =
 {
-  sol++;
-  printf("Solution %d :\n",sol);
-  for(int i = 0; i < N; i++){
-    for(int j = 0; j < N; j++){
-      if(col[i] == j){
-        printf("Q%d\t",i+1);
-      }
-      else printf("\t");
-    }
-    printf("\n-------------------------------");
-    printf("\n");
-  }
-}
-bool isSafe(int row,int c){
-  for(int i = 0; i < row; i++){
-    if(col[i] == c){
-      return false;
-    }
-    else if(abs(col[i] - c) == abs(row - i)){
-      return false;
-    }
-  }
-  return true;
-}
+    {1,  2,  3,  4},
+    {5,  6,  7,  8},
+    {9, 10, 11, 12},
+    {13, 14, 15,  0}
+};
 
-void solve(int row){
-  if(row == N){
-    print();
-    return;
-  }
-  for(int c = 0; c < N; c++){
-    if(isSafe(row,c)){
-      col[row] = c;
-      solve(row+1);
-      col[row] = -1;
-    }
-  }
-}
+// Structure for Node
+struct Node
+{
+    int mat[N][N];
+    int x, y;
+    int cost;
+    int level;
+};
 
-int main(){
-  printf("Enter number of queens : ");
-  scanf("%d",&N);
+// Function to print matrix
+void printMatrix(int mat[N][N])
+{
+    int i, j;
 
-  for(int i = 0; i < N; i++) col[i] = -1;
-  solve(0);
-
-  if(sol == 0) printf("No solutions exists");
-  else printf("Total solutions : %d",sol);
-  return 0;
-}
-
-
-//g color
-#include<stdio.h>
-#include<stdbool.h>
-
-#define V 4
-
-void printSol(int col[]){
-  for(int i = 0; i < V; i++){
-    printf("Colore of %d -> color %d",i+1,col[i]);
-  }
-}
-bool isSafe(bool graph[][V], int color[], int v, int c){
-  for(int i = 0; i < V; i++){
-    if(graph[v][i] == 1 && color[i] == c){
-      return false;
-    }
-  }
-  return true;
-}
-
-bool graphColUtil(bool graph[][V], int color[], int m, int v){
-  if(v == V){
-    return true;
-  }
-
-  for(int c = 1; c <= m; c++){
-    if(isSafe(graph,color,v,c)){
-      color[v] = c;
-
-    if(graphColUtil(graph,color,m,v+1)){
-      return true;
-    }
-
-    color[v] = 0;
-  }
-}
-  return false;
-}
-
-bool graphCol(bool graph[][V], int m){
-  int col[V];
-  for(int i = 0; i < V; i++){
-    col[i] = 0;
-  }
-
-  if(graphColUtil(graph,col,m,0) == false){
-    printf("No solution\n");
-    return false;
-  }
-
-  printSol(col);
-  return true;
-}
-
-int main() {
-    // Adjacency matrix from the image
-    bool graph[V][V] = {
-        {0, 1, 1, 1},
-        {1, 0, 1, 0},
-        {1, 1, 0, 1},
-        {1, 0, 1, 0}
-    };
-
-    int m = 3; // number of colors
-
-    printf("Adjacency Matrix:\n");
-    for (int i = 0; i < V; i++) {
-        for (int j = 0; j < V; j++)
-            printf("%d ", graph[i][j]);
+    for(i = 0; i < N; i++)
+    {
+        for(j = 0; j < N; j++)
+        {
+            if(mat[i][j] == 0)
+                printf("    ");
+            else
+                printf("%3d ", mat[i][j]);
+        }
         printf("\n");
     }
+    printf("\n");
+}
 
-    graphCol(graph, m);
+// Function to copy matrix
+void copyMatrix(int source[N][N], int dest[N][N])
+{
+    int i, j;
+
+    for(i = 0; i < N; i++)
+        for(j = 0; j < N; j++)
+            dest[i][j] = source[i][j];
+}
+
+// Function to check if two matrices are equal
+int isEqual(int a[N][N], int b[N][N])
+{
+    int i, j;
+
+    for(i = 0; i < N; i++)
+        for(j = 0; j < N; j++)
+            if(a[i][j] != b[i][j])
+                return 0;
+
+    return 1;
+}
+
+// Function to calculate heuristic cost
+// Counts misplaced tiles
+int calculateCost(int mat[N][N])
+{
+    int i, j;
+    int count = 0;
+
+    for(i = 0; i < N; i++)
+        for(j = 0; j < N; j++)
+            if(mat[i][j] != 0 && mat[i][j] != goal[i][j])
+                count++;
+
+    return count;
+}
+
+// Function to check valid move
+int isSafe(int x, int y)
+{
+    return (x >= 0 && x < N && y >= 0 && y < N);
+}
+
+// Branch and Bound Function
+void solvePuzzle(int initial[N][N], int x, int y)
+{
+    struct Node current, child, bestChild;
+
+    int row[] = {-1, 1, 0, 0};
+    int col[] = {0,  0, -1, 1};
+
+    int i;
+    int newX, newY;
+    int temp;
+    int minCost;
+
+    // To avoid revisiting same state
+    // store last position of blank
+    int lastX = -1, lastY = -1;
+
+    // Initialize current node
+    copyMatrix(initial, current.mat);
+    current.x     = x;
+    current.y     = y;
+    current.level = 0;
+    current.cost  = calculateCost(initial);
+
+    printf("\nInitial State:\n");
+    printMatrix(current.mat);
+
+    // Continue until goal reached or step limit
+    while(current.cost != 0 && current.level < 200)
+    {
+        minCost = 999;
+
+        // Generate all possible children
+        for(i = 0; i < 4; i++)
+        {
+            newX = current.x + row[i];
+            newY = current.y + col[i];
+
+            // Skip going back to last position
+            if(newX == lastX && newY == lastY)
+                continue;
+
+            if(isSafe(newX, newY))
+            {
+                // Copy current state into child
+                copyMatrix(current.mat, child.mat);
+
+                // Swap blank tile
+                temp = child.mat[current.x][current.y];
+                child.mat[current.x][current.y] = child.mat[newX][newY];
+                child.mat[newX][newY] = temp;
+
+                // Update child details
+                child.x     = newX;
+                child.y     = newY;
+                child.level = current.level + 1;
+                child.cost  = calculateCost(child.mat);
+
+                // Select best child
+                if(child.cost < minCost)
+                {
+                    minCost = child.cost;
+
+                    copyMatrix(child.mat, bestChild.mat);
+                    bestChild.x     = child.x;
+                    bestChild.y     = child.y;
+                    bestChild.level = child.level;
+                    bestChild.cost  = child.cost;
+                }
+            }
+        }
+
+        // Save last blank position before moving
+        lastX = current.x;
+        lastY = current.y;
+
+        // Update current node
+        copyMatrix(bestChild.mat, current.mat);
+        current.x     = bestChild.x;
+        current.y     = bestChild.y;
+        current.level = bestChild.level;
+        current.cost  = bestChild.cost;
+
+        printf("Step %d:\n", current.level);
+        printMatrix(current.mat);
+    }
+
+    if(current.cost == 0)
+        printf("Goal State Reached in %d steps!\n", current.level);
+    else
+        printf("Could not solve puzzle!\n");
+}
+
+int main()
+{
+    int initial[N][N];
+    int i, j;
+    int x, y;
+
+    printf("Enter initial puzzle state (0 for blank):\n");
+
+    for(i = 0; i < N; i++)
+    {
+        for(j = 0; j < N; j++)
+        {
+            scanf("%d", &initial[i][j]);
+
+            if(initial[i][j] == 0)
+            {
+                x = i;
+                y = j;
+            }
+        }
+    }
+
+    solvePuzzle(initial, x, y);
 
     return 0;
 }
